@@ -48,7 +48,7 @@ public:
 class Invaders
 {
   float time{0};
-  float nextMovement{0.7};
+  float nextMovement{0.25};
   Invader *invaders{nullptr};
 
 public:
@@ -78,21 +78,111 @@ public:
       // move up an invader height
       obj.yPos += INVADER_HEIGHT;
 
+      obj.xVel = 32;
+
       obj.alive = true;
+    }
+  }
+
+  Invader *findFirstInvaderAliveInRow(int row)
+  {
+    for (int j = 0; j < NUM_INVADERS_ACROSS; j++)
+    {
+      Invader &obj = invaders[j + (row * NUM_INVADERS_ACROSS)];
+      if (obj.alive)
+      {
+        return &obj;
+        break;
+      }
+    }
+    return nullptr;
+  }
+
+  Invader *findLeftMostInvaderAliveInRow(int row)
+  {
+    return findFirstInvaderAliveInRow(row);
+  }
+
+  Invader *findRightMostInvaderAliveInRow(int row)
+  {
+    for (int j = NUM_INVADERS_ACROSS - 1; j >= 0; j--)
+    {
+      Invader &obj = invaders[j + (row * NUM_INVADERS_ACROSS)];
+      if (obj.alive)
+      {
+        return &obj;
+        break;
+      }
+    }
+    return nullptr;
+  }
+
+  void dropAndReverseDirectionOfInvadersInRow(int row)
+  {
+    for (int j = 0; j < NUM_INVADERS_ACROSS; j++)
+    {
+      Invader &obj = invaders[j + (row * NUM_INVADERS_ACROSS)];
+      if (obj.alive)
+      {
+        obj.xVel = -obj.xVel;
+        obj.yPos += INVADER_HEIGHT;
+        // kill the invader when it hits the bottom of the screen
+        if (obj.yPos > SCREEN_HEIGHT)
+        {
+          obj.alive = false;
+        }
+      }
     }
   }
 
   void update(float deltaTime)
   {
-    time += deltaTime;
-    if (time >= nextMovement)
+    // for each row of invaders
+    for (int i = 0; i < NUM_INVADERS_DOWN; i++)
     {
-      time -= nextMovement;
-      for (int i = 0; i < NUM_INVADERS; i++)
+      // find the first invader in the row that is alive
+      Invader *ptr = findFirstInvaderAliveInRow(i);
+      if (ptr == nullptr)
       {
-        Invader &obj = invaders[i];
-        obj.update(deltaTime);
+        // no invaders alive in this row
+        // go to next row
+        continue;
       }
+
+      // what direction is the row moving?
+      Invader &leader = *ptr;
+      if (leader.xVel < 0)
+      {
+        // moving left
+        // find the leftmost invader of all invaders in this row
+        Invader &leftmost = *findLeftMostInvaderAliveInRow(i);
+        // if the x position is <= left edge of screen,
+        if (leftmost.xPos <= 0)
+        {
+          // move all invaders in row down the height of an invader
+          // reverse the x velocity for all invaders in this row
+          dropAndReverseDirectionOfInvadersInRow(i);
+        }
+      }
+      else if (leader.xVel > 0)
+      {
+        // moving right
+        // find the rightmost invader of all invaders in this row
+        Invader &rightmost = *findRightMostInvaderAliveInRow(i);
+        // if the x position + width of invader is >= right edge of screen,
+        if (rightmost.xPos + INVADER_WIDTH >= SCREEN_WIDTH)
+        {
+          // reverse the x velocity for all invaders in this row
+          // move all invaders in row down the height of an invader
+          dropAndReverseDirectionOfInvadersInRow(i);
+        }
+      }
+    }
+
+    for (int i = 0; i < NUM_INVADERS; i++)
+    {
+      Invader &obj = invaders[i];
+      obj.update(deltaTime);
     }
   }
   void draw(SDL_Renderer *renderer)
