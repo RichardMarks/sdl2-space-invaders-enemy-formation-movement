@@ -17,10 +17,10 @@ class Invader
 {
 public:
   bool alive{false};
-  float xPos;
-  float yPos;
-  float xVel;
-  float yVel;
+  float xPos{0};
+  float yPos{0};
+  float xVel{0};
+  float yVel{0};
   SDL_Color color{0, 0xff, 0, 0xff};
   SDL_Rect rect{-100, -100, INVADER_WIDTH, INVADER_HEIGHT};
   void update(float deltaTime)
@@ -84,6 +84,28 @@ public:
     }
   }
 
+  Invader *findInvaderAtPosition(int x, int y)
+  {
+    for (int i = 0; i < NUM_INVADERS; i++)
+    {
+      Invader &obj = invaders[i];
+      if (!obj.alive)
+      {
+        continue;
+      }
+      bool a = x >= obj.rect.x;
+      bool b = x <= obj.rect.x + obj.rect.w;
+      bool c = y >= obj.rect.y;
+      bool d = y <= obj.rect.y + obj.rect.h;
+
+      if (a && b && c && d)
+      {
+        return &obj;
+      }
+    }
+    return nullptr;
+  }
+
   Invader *findFirstInvaderAliveInRow(int row)
   {
     for (int j = 0; j < NUM_INVADERS_ACROSS; j++)
@@ -117,11 +139,11 @@ public:
     return nullptr;
   }
 
-  void dropAndReverseDirectionOfInvadersInRow(int row)
+  void dropAndReverseDirectionOfInvaders()
   {
-    for (int j = 0; j < NUM_INVADERS_ACROSS; j++)
+    for (int j = 0; j < NUM_INVADERS; j++)
     {
-      Invader &obj = invaders[j + (row * NUM_INVADERS_ACROSS)];
+      Invader &obj = invaders[j];
       if (obj.alive)
       {
         obj.xVel = -obj.xVel;
@@ -161,7 +183,7 @@ public:
         {
           // move all invaders in row down the height of an invader
           // reverse the x velocity for all invaders in this row
-          dropAndReverseDirectionOfInvadersInRow(i);
+          dropAndReverseDirectionOfInvaders();
         }
       }
       else if (leader.xVel > 0)
@@ -174,7 +196,7 @@ public:
         {
           // reverse the x velocity for all invaders in this row
           // move all invaders in row down the height of an invader
-          dropAndReverseDirectionOfInvadersInRow(i);
+          dropAndReverseDirectionOfInvaders();
         }
       }
     }
@@ -224,7 +246,18 @@ int main()
           running = false;
         }
       }
+      case SDL_MOUSEBUTTONDOWN:
+      {
+        // testing: click on an invader to kill it
+        Invader *ptr = invaders.findInvaderAtPosition(event.button.x, event.button.y);
+        if (ptr != nullptr)
+        {
+          Invader &obj = *ptr;
+          obj.alive = false;
+        }
+      }
       break;
+        break;
       default:
         break;
       }
