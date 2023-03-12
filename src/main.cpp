@@ -52,6 +52,8 @@ class Invaders
   Invader *invaders{nullptr};
 
 public:
+  float leftBoundary;
+  float rightBoundary;
   Invaders()
   {
     invaders = new Invader[NUM_INVADERS];
@@ -179,7 +181,7 @@ public:
         // find the leftmost invader of all invaders in this row
         Invader &leftmost = *findLeftMostInvaderAliveInRow(i);
         // if the x position is <= left edge of screen,
-        if (leftmost.xPos <= 0)
+        if (leftmost.xPos <= leftBoundary)
         {
           // move all invaders in row down the height of an invader
           // reverse the x velocity for all invaders in this row
@@ -192,7 +194,7 @@ public:
         // find the rightmost invader of all invaders in this row
         Invader &rightmost = *findRightMostInvaderAliveInRow(i);
         // if the x position + width of invader is >= right edge of screen,
-        if (rightmost.xPos + INVADER_WIDTH >= SCREEN_WIDTH)
+        if (rightmost.xPos + INVADER_WIDTH >= rightBoundary)
         {
           // reverse the x velocity for all invaders in this row
           // move all invaders in row down the height of an invader
@@ -228,6 +230,9 @@ int main()
   float lastTime = static_cast<float>(SDL_GetTicks());
 
   Invaders invaders;
+
+  invaders.leftBoundary = INVADER_WIDTH;
+  invaders.rightBoundary = SCREEN_WIDTH - INVADER_WIDTH;
 
   invaders.getIntoFormation();
 
